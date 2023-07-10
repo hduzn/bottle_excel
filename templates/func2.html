@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Excel 文件处理小助手</title>
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css"><style>
+        .my-h1 {
+            margin-bottom: 4rem!important;
+            margin-top: 2rem!important;
+            font-size: 42px;
+        }
+        .return-index {
+            margin-bottom: 2rem!important;
+            margin-top: 4rem!important;
+        }
+      </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand mx-auto" href="/">Excel 文件处理小助手</a>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <p class="my-h1">{{ action_title }}</p>
+        <form method="post" action="/upload2" enctype="multipart/form-data">
+            <div class="form-group d-flex align-items-center">
+                <label for="file" class="form-label me-3">选择多个 Excel 文件:</label>
+                <input type="file" class="form-control" id="file" name="file[]" multiple style="color: blue; width: 50%;" multiple>
+                <button type="submit" class="btn btn-primary ms-3 flex-shrink-0 btn-lg">提交</button>
+            </div>
+            <small class="form-text text-danger">使用说明：1.先选择多个文件；2.再点“提交”。</small>
+            <input type="hidden" name="action" value="{{ action }}">
+        </form>
+        <div class="return-index"><a href="/" class="btn btn-secondary btn-lg btn-block mt-3">返回首页</a></div>
+    </div>
+</body>
+</html>

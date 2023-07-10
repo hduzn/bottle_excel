@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <title>Excel 文件处理小助手</title>
+  <style>
+    .my-h1 {
+        margin-bottom: 1rem!important;
+		margin-top: 2rem!important;
+        text-align: center;
+        width: 100%;
+        font-size: 52px;
+    }
+    .my-h3 {
+        font-size: 18px;
+    }
+    .t1 {
+        font-size: 36px;
+        padding-bottom: 0.5rem!important;
+        padding-top: 0.5rem!important;
+        text-align: center;
+    }
+    .t3 {
+        font-size: 24px;
+        padding-bottom: 2rem!important;
+        text-align: left;
+    }
+    .table-primary th {
+        font-size: 30px;
+    }
+    .my-link {
+    color: #007bff;
+    }
+    .my-link:hover {
+        color: #1ea08b;
+    }
+  </style>
+</head>
+<body class="bg-light">
+    <div class="container">
+        <p class="my-h1">Excel 文件处理小助手</p>
+        <table class="table">
+            <thead class="table-primary">
+                <tr><th scope="col">#</th>
+                    <th scope="col" style="width: 30%;">功能</th>
+                    <th scope="col">功能描述</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><th scope="row" class="align-middle">1</th>
+                    <td class="align-middle"><h3><div class="my-h3"><a class="text-decoration-none my-link" href="/func?action=fun1">按Sheet拆成n个表格</a></div></h3></td>
+                    <td><p>1个Excel文件中有多个Sheet工作表，每个Sheet工作表保存成1个Excel文件。</p></td>
+                </tr>
+                <tr><th scope="row" class="align-middle">2</th>
+                    <td class="align-middle"><h3><div class="my-h3"><a class="text-decoration-none my-link" href="/func?action=fun2">按A列标题拆成n个表格</a></div></h3></td>
+                    <td><p>1个Excel文件中A列的标题为"type"，按A列的内容拆分成n个表格，并保留标题行。比如A列中的内容有1、2、3，那最后保存的表格就是1.xlsx、2.xlsx、3.xlsx。<a href="/ex_templates/template.xlsx">下载表格模板</a></p></td>
+                </tr>
+                <tr><th scope="row" class="align-middle">3</th>
+                    <td class="align-middle"><h3><div class="my-h3"><a class="text-decoration-none my-link" href="/func?action=fun3">按A列标题拆分成n个sheet</a></div></h3></td>
+                    <td><p>1个Excel文件中A列的标题为"type"，按A列的内容拆分成n个Sheet工作表，并保留标题行，保存到1个Excel文件中。<a href="/ex_templates/template.xlsx">下载表格模板</a></p></td>
+                </tr>
+                <tr><th scope="row" class="align-middle">4</th>
+                    <td class="align-middle"><h3><div class="my-h3"><a class="text-decoration-none my-link" href="/func2?action=fun4">多个表格合并到不同sheet</a></div></h3></td>
+                    <td><p>多个Excel文件，每个Excel文件为一个Sheet工作表，保存到1个Excel文件中，Sheet名称为原文件名。</p></td>
+                </tr>
+                <tr><th scope="row" class="align-middle">5</th>
+                    <td class="align-middle"><h3><div class="my-h3"><a class="text-decoration-none my-link" href="/func2?action=fun5">多个表格合并到1个sheet</a></div></h3></td>
+                    <td><p>多个Excel文件，把所有数据合并到1个Excel文件中，并且全部数据在一个Sheet工作表中。文件的处理顺序是按文件名默认的顺序排序的。</p></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+</body>
+</html>
