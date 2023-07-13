@@ -4,20 +4,20 @@
 @File    :   app.py
 @Time    :   2023/07/04
 @Author  :   HDUZN
-@Version :   1.0
+@Version :   1.1
 @Contact :   hduzn@vip.qq.com
 @License :   (C)Copyright 2023-2024
 @Desc    :   1.把Excel文件按Sheet工作表保存成n个Excel文件
              2.表格按A列标题“type”拆分成n个表格,保留标题行
              3.表格按A列标题“type”拆分成n个sheet工作表,保留标题行
-             4.把多个Excel文件中的数据合并到一个Excel文件的不同sheet中 merged.xlsx
-             5.把多个Excel文件中的数据合并到一个Excel文件的一个sheet中 merged_one_sheet.xlsx
+             4.把多个Excel文件中的数据合并到一个Excel文件的不同sheet中
+             5.把多个Excel文件中的数据合并到一个Excel文件的一个sheet中
              pip install bottle, pandas, openpyxl, xlsxwriter
 '''
 
 # here put the import lib
 from bottle import Bottle, request, static_file, template
-import os, zipfile, datetime, random, string
+import os, zipfile, datetime, random, string, shutil
 import pandas as pd
 
 app = Bottle()
@@ -71,25 +71,29 @@ def upload():
     upload_file = request.files.get('file')
     if upload_file:
         # file_path = os.path.join('uploads', upload_file.filename)
-        filename = generate_unique_filename()
-        file_path = os.path.join('uploads', filename)
+        delete_files_in_dir(f'output') # 清空output目录
+        user_id = generate_unique_name() # 创建唯一的用户id
+        user_dir = f'uploads/{user_id}'
+        os.makedirs(user_dir) # 创建用户目录
+
+        file_path = f'uploads/{user_id}/{upload_file.raw_filename}'
         upload_file.save(file_path)
         # print(file_path)
         
         action = request.forms.get('action')
         if action == 'fun1':
-            excel_to_files_by_sheet(file_path)
+            excel_to_files_by_sheet(file_path, user_id)
         elif action == 'fun2':
-            excel_split_by_type(file_path)
+            excel_split_by_type(file_path, user_id)
         elif action == 'fun3':
-            excel_split_by_type_to_one(file_path)
+            excel_split_by_type_to_one(file_path, user_id)
         else:
             print('No action!')
         
-        # 删除保存在uploads目录下的excel文件
-        os.remove(file_path)
+        shutil.copy(f'{user_dir}/output_{user_id}.zip', f'output/output_{user_id}.zip') # 复制压缩包到output目录
+        shutil.rmtree(user_dir) # 删除用户目录
 
-        return static_file('output.zip', root='output', download=True)
+        return static_file(f'output_{user_id}.zip', root='output', download=True)
 
 @app.route('/upload2', method='POST')
 def upload2():
@@ -100,6 +104,11 @@ def upload2():
     filenames = []
     sheet_names = []
     if upload_files:
+        delete_files_in_dir(f'output') # 清空output目录
+        user_id = generate_unique_name() # 创建唯一的用户id
+        user_dir = f'uploads/{user_id}'
+        os.makedirs(user_dir) # 创建用户目录
+
         for upload_file in upload_files:
             temp_upload_file = upload_file.raw_filename
             # print(temp_upload_file)
@@ -110,101 +119,112 @@ def upload2():
                 sheet_name = ex_name.split('.')[0]
                 sheet_names.append(sheet_name)
 
-                filename = generate_unique_filename() # 生成唯一的文件名
-                file_path = os.path.join('uploads', filename)
+                file_path = f'uploads/{user_id}/{upload_file.raw_filename}'
                 filenames.append(file_path)
                 upload_file.save(file_path)
                 # print(file_path)
         
         action = request.forms.get('action')
         if action == 'fun4':
-            merge_excels_into_sheets(filenames, sheet_names)
+            merge_excels_into_sheets(filenames, sheet_names, user_id)
         elif action == 'fun5':
-            merge_excels_into_one_sheet(filenames)
+            merge_excels_into_one_sheet(filenames, user_id)
         else:
             print('No action!')
         
-        # 删除保存在uploads目录下的所有excel文件
-        for filename in filenames:
-            os.remove(filename)
-        
-        return static_file('output.zip', root='output', download=True)
+        shutil.copy(f'{user_dir}/output_{user_id}.zip', f'output/output_{user_id}.zip') # 复制压缩包到output目录
+        shutil.rmtree(user_dir) # 删除用户目录
 
-# 生成唯一的文件名
-def generate_unique_filename():
+        return static_file(f'output_{user_id}.zip', root='output', download=True)
+
+# 按时间生成唯一的名字
+def generate_unique_name():
     now = datetime.datetime.now()
     timestamp = now.strftime('%Y%m%d%H%M%S')
 
     letters = string.ascii_letters + string.digits
     random_digits = ''.join(random.choice(letters) for _ in range(4))
-    return f'ex_{timestamp}{random_digits}.xlsx'
+    return timestamp + random_digits
+
+# 删除目录下的所有文件
+def delete_files_in_dir(directory):
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 # 1.把Excel文件按Sheet工作表保存成n个Excel文件
-def excel_to_files_by_sheet(file_path):
+def excel_to_files_by_sheet(file_path, user_id):
     excel_data = pd.read_excel(file_path, sheet_name=None)
-    zip_path = os.path.join('output', 'output.zip')
+    user_dir = f'uploads/{user_id}'
+    zip_path = f'{user_dir}/output_{user_id}.zip'
     with zipfile.ZipFile(zip_path, 'w') as zip_file:
         for sheet_name, sheet_data in excel_data.items():
-            sheet_file_path = os.path.join('output', f'{sheet_name}.xlsx')
+            sheet_file_path = f'{user_dir}/{sheet_name}.xlsx'
             sheet_data.to_excel(sheet_file_path, index=False)
             zip_file.write(sheet_file_path, arcname=f'{sheet_name}.xlsx')
             os.remove(sheet_file_path)
 
 # 2.表格按A列标题“type”拆分成n个表格,保留标题行
-def excel_split_by_type(file_path):
+def excel_split_by_type(file_path, user_id):
     excel_data = pd.read_excel(file_path)
     column_name = 'type'
     types = excel_data[column_name].unique()
-    zip_path = os.path.join('output', 'output.zip')
+    user_dir = f'uploads/{user_id}'
+    zip_path = f'{user_dir}/output_{user_id}.zip'
     with zipfile.ZipFile(zip_path, 'w') as zip_file:
         for t in types:
             filtered_data = excel_data[excel_data[column_name] == t]
-            sheet_file_path = os.path.join('output', f'{t}.xlsx')
+            sheet_file_path = f'{user_dir}/{t}.xlsx'
             filtered_data.to_excel(sheet_file_path, index=False)
             zip_file.write(sheet_file_path, arcname=f'{t}.xlsx')
             os.remove(sheet_file_path)
 
 # 3.表格按A列标题“type”拆分成n个sheet工作表,保留标题行
-def excel_split_by_type_to_one(file_path):
+def excel_split_by_type_to_one(file_path, user_id):
     excel_data = pd.read_excel(file_path)
     column_name = 'type'
     types = excel_data[column_name].unique()
-    output_file_path = os.path.join('output', 'output.xlsx')
-    with pd.ExcelWriter(output_file_path, engine='openpyxl') as writer:
+    user_dir = f'uploads/{user_id}'
+    xlsx_path = f'{user_dir}/output_{user_id}.xlsx'
+    with pd.ExcelWriter(xlsx_path, engine='openpyxl') as writer:
         for t in types:
             filtered_data = excel_data[excel_data[column_name] == t]
             filtered_data.to_excel(writer, sheet_name=str(t), index=False)  # 将t转换为字符串
-    zip_output(output_file_path, 'output.xlsx')
+        
+    zip_output(xlsx_path, user_id)
 
 # 4.把多个Excel文件中的数据合并到一个Excel文件的不同sheet中 merged.xlsx
-def merge_excels_into_sheets(file_paths, sheet_names):
-    output_file_path = os.path.join('output', 'merged.xlsx')
-    with pd.ExcelWriter(output_file_path, engine='xlsxwriter') as writer:
+def merge_excels_into_sheets(file_paths, sheet_names, user_id):
+    user_dir = f'uploads/{user_id}'
+    xlsx_path = f'{user_dir}/output_{user_id}.xlsx'
+    with pd.ExcelWriter(xlsx_path, engine='xlsxwriter') as writer:
         for file_path in file_paths:
                 sheet_name = sheet_names[file_paths.index(file_path)]
                 df = pd.read_excel(file_path)
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
-    zip_output(output_file_path, 'merged.xlsx')
+    zip_output(xlsx_path, user_id)
 
 # 5.把多个Excel文件中的数据合并到一个Excel文件的一个sheet中
-def merge_excels_into_one_sheet(file_paths):
-    output_file_path = os.path.join('output', 'merged_one_sheet.xlsx')
+def merge_excels_into_one_sheet(file_paths, user_id):
+    user_dir = f'uploads/{user_id}'
+    xlsx_path = f'{user_dir}/output_{user_id}.xlsx'
     merged_data = pd.DataFrame() # 创建一个空的DataFrame用于存储合并后的数据
     for file_path in file_paths:
         df = pd.read_excel(file_path)
         merged_data = pd.concat([merged_data, df], ignore_index=True, sort=False)
-    merged_data.to_excel(output_file_path, index=False)
-    zip_output(output_file_path, 'merged_one_sheet.xlsx')
+    merged_data.to_excel(xlsx_path, index=False)
+    zip_output(xlsx_path, user_id)
 
 # 把单个文件打包成 output.zip
-def zip_output(output_file_path, arcname):
-    if os.path.exists(output_file_path):
-        zip_path = os.path.join('output', 'output.zip')
+def zip_output(xlsx_path, user_id):
+    if os.path.exists(xlsx_path):
+        zip_path = f'uploads/{user_id}/output_{user_id}.zip'
         with zipfile.ZipFile(zip_path, 'w') as zip_file:
-            zip_file.write(output_file_path, arcname=arcname)
-        os.remove(output_file_path)
+            zip_file.write(xlsx_path, arcname=f'output_{user_id}.xlsx')
+        # os.remove(xlsx_path)
     else:
-        print(f"File {output_file_path} does not exist.")
+        print(f"File {xlsx_path} does not exist.")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port='8080')
+    app.run(host='0.0.0.0', port='9881')
